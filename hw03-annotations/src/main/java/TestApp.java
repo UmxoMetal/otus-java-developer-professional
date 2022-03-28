@@ -1,6 +1,6 @@
 import annotations.tests.*;
 
-import static annotations.service.TestRunner.*;
+import static annotations.service.TestRunner.launch;
 import static annotations.service.TestReporter.report;
 
 public class TestApp {

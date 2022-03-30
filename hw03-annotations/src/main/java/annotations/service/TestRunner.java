@@ -7,11 +7,14 @@ import annotations.exceptions.TestExecutionFailedException;
 import annotations.model.TestResultDetails;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
-import lombok.RequiredArgsConstructor;
 import java.util.List;
+import java.util.Optional;
+import lombok.RequiredArgsConstructor;
+
+import static java.lang.Boolean.FALSE;
+import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static lombok.AccessLevel.PRIVATE;
-import static java.util.Arrays.stream;
 import static annotations.enums.TestResult.FAILED;
 import static annotations.enums.TestResult.PASSED;
 
@@ -25,6 +28,7 @@ public class TestRunner {
     private static final String UNABLE_TO_ACCESS_DEFAULT_CONSTRUCTOR_ERROR_MSG = "Default constructor is not accessible\n";
     private static final String TEST_EXECUTION_ERROR_MSG = "Exception while test execution. Failed with msg = %s \n";
     private static final String SETUP_EXECUTION_ERROR_MSG = "Exception while setup execution. Failed with msg = %s\n";
+    private static final String SETUP_EXECUTION_EXCEPTION_MSG = "Exception while setup execution.";
     private static final String SUCCESS_MSG = "Success";
 
     public static List<TestResultDetails> launch(Class<?> clazz) {
@@ -39,10 +43,11 @@ public class TestRunner {
             System.out.printf(TEST_STARTED_MSG, method.getName());
             var instance = clazz.getDeclaredConstructor().newInstance();
 
-            setUp(instance, clazz);
-            var testDetails = executeTest(method, instance);
-            tearDown(instance, clazz);
+            var testDetails = setUp(instance, clazz).isPresent() ?
+                    new TestResultDetails(method, FAILED, SETUP_EXECUTION_EXCEPTION_MSG) :
+                    executeTest(method, instance);
 
+            tearDown(instance, clazz);
             System.out.printf(TEST_FINISHED_MSG, testDetails.getMethod().getName(), testDetails.getResult(),
                     testDetails.getDetails(), clazz.getName());
             return testDetails;
@@ -52,15 +57,20 @@ public class TestRunner {
         }
     }
 
-    private static void setUp(Object instance, Class<?> clazz) {
-        getMethodsByAnnotationInClass(Before.class, clazz)
-                .forEach(beforeMethod -> {
+    private static Optional<Boolean> setUp(Object instance, Class<?> clazz) {
+        return getMethodsByAnnotationInClass(Before.class, clazz)
+                .stream()
+                .map(beforeMethod -> {
                     try {
                         beforeMethod.invoke(instance);
+                        return true;
                     } catch (Exception e) {
                         System.err.printf(SETUP_EXECUTION_ERROR_MSG, e.getCause());
+                        return false;
                     }
-                });
+                })
+                .filter(FALSE::equals)
+                .findAny();
     }
 
     private static TestResultDetails executeTest(Method method, Object instance) {

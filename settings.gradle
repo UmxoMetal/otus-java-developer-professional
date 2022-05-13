@@ -1,3 +1,4 @@
 rootProject.name = 'Otus_Java_Professional'
 include 'hw01-gradle'
 include 'hw02-jdk'
+include 'hw03-annotations'

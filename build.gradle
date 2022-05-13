@@ -32,6 +32,7 @@ allprojects {
             dependency("org.assertj:assertj-core:${Versions.assertJ}")
             dependency("org.mockito:mockito-core:${Versions.mockito}")
             dependency("org.mockito:mockito-junit-jupiter:${Versions.mockito}")
+            dependency("org.projectlombok:lombok:${Versions.lombok}")
         }
     }
 }

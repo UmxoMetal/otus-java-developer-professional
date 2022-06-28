@@ -1,11 +1,11 @@
 package ru.otus.log;
 
 import java.lang.reflect.Proxy;
-import java.util.stream.Collectors;
 import ru.otus.log.annotation.Log;
 import ru.otus.log.dto.MethodInfoDto;
 
 import static java.util.Arrays.stream;
+import static java.util.stream.Collectors.toSet;
 
 class Ioc<I> {
     private static final String METHOD_EXECUTION_MSG = "EXECUTED METHOD: %s%s\n";
@@ -15,7 +15,7 @@ class Ioc<I> {
         var methodInfoDtos = stream(instance.getClass().getMethods())
                 .filter(method -> method.isAnnotationPresent(Log.class))
                 .map(MethodInfoDto::new)
-                .collect(Collectors.toList());
+                .collect(toSet());
 
         return (C) Proxy.newProxyInstance(Ioc.class.getClassLoader(),
                 new Class<?>[]{clazz}, (proxy, method, methodArgs) -> {
